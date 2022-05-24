@@ -5,6 +5,8 @@ set(SOURCE_FILES
         ioapi.c
         unzip.c
         zip.c
+        minizip.c
+        miniunz.c
         )
 SET(ZLIB_SO /Users/yuhaoo/CLionProjects/zlib-1.2.12/cmake-build-debug/libz.dylib)
 
