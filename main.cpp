@@ -1,8 +1,18 @@
 #include <iostream>//
 #include <sstream>
+#include "zlib.h"
 // 1652691410983
+
+void CreateZipFromDir(std::string dirName, std::string zipFileName) {
+
+}
+
 int main() {
-    std::cout << "Hello, World!" << std::endl;
+
+    return 1;
+}
+int main1() {
+    std::cout << "qHello, World!" << std::endl;
     char now[64];
     struct std::tm *ttime;
     time_t tt = 1652691410;
