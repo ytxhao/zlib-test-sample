@@ -143,7 +143,7 @@ bool ZlibHelper::GetAllFiles(zipFile zip_file, const std::string &input_dir, con
             std::string file_name_in_zip = input_dir.substr(last_dir_index + 1);
             AddFileToZip(zip_file, file_name_in_zip, input_dir, true);
         }
-        std::cout << input_dir << " is empty directory" << std::endl;
+//        std::cout << input_dir << " is empty directory" << std::endl;
     }
     closedir(open_dir);
     return true;
@@ -162,6 +162,7 @@ bool ZlibHelper::AddFileToZip(zipFile zip_file, const std::string &file_name_in_
     zinfo.internal_fa = 0;
     zinfo.external_fa = 0;
     std::string new_file_name = file_name_in_zip;
+    AddFileTime(file_path, &zinfo.tmz_date, &zinfo.dosDate);
     if (is_dir) {
         new_file_name = file_name_in_zip + "/";
     }
@@ -202,6 +203,26 @@ bool ZlibHelper::AddFileToZip(zipFile zip_file, const std::string &file_name_in_
     return true;
 }
 
-int ZlibHelper::AddFileTime(const std::string &file, tm_zip *tmzip, unsigned long *dt) {
-    return 0;
+int ZlibHelper::AddFileTime(const std::string &file, tm_zip *tmz_date, unsigned long *dos_date) {
+    (void)dos_date;
+    int ret = 0;
+    struct stat s;
+    struct tm *file_date;
+    time_t tm_t = 0;
+    if (strcmp(file.c_str(), "-") != 0) {
+        if (stat(file.c_str(), &s)==0)
+        {
+            tm_t = s.st_mtime;
+            ret = 1;
+        }
+    }
+
+    file_date = localtime(&tm_t);
+    tmz_date->tm_sec  = file_date->tm_sec;
+    tmz_date->tm_min  = file_date->tm_min;
+    tmz_date->tm_hour = file_date->tm_hour;
+    tmz_date->tm_mday = file_date->tm_mday;
+    tmz_date->tm_mon  = file_date->tm_mon ;
+    tmz_date->tm_year = file_date->tm_year;
+    return ret;
 }

@@ -24,7 +24,7 @@ private:
 
     static bool AddFileToZip(zipFile zip_file, const std::string & file_name_in_zip, const std::string &file_path, bool is_dir);
 
-    static int AddFileTime(const std::string &file, tm_zip *tmzip, unsigned long *dt);
+    static int AddFileTime(const std::string &file, tm_zip *tmz_date, unsigned long *dos_date);
 };
 
 #endif

@@ -23,8 +23,8 @@ int main() {
 //    {
 //        std::cout << dir << std::endl;
 //    }
-//    ZlibHelper::CreateZipFromDir("/Users/yuhaoo/workspace/tmp","/Users/yuhaoo/workspace/tmp.zip");
-    ZlibHelper::CreateZipFromDir("/Users/yuhaoo/workspace/libzegoliveroom.so","/Users/yuhaoo/workspace/tmp2.zip");
+    ZlibHelper::CreateZipFromDir("/Users/yuhaoo/workspace/tmp","/Users/yuhaoo/workspace/tmp.zip");
+//    ZlibHelper::CreateZipFromDir("/Users/yuhaoo/workspace/libzegoliveroom.so","/Users/yuhaoo/workspace/tmp2.zip");
 
     return 1;
 }
