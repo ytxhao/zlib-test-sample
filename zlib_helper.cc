@@ -5,6 +5,8 @@
 #include <dirent.h>
 #include <vector>
 
+#define WRITE_BUFFER_SIZE (16384)
+#define MAX_FILENAME (256)
 
 ZlibHelper::ZlibHelper() {
 
@@ -27,7 +29,7 @@ bool ZlibHelper::CreateZipFromDir(const std::string &dir, const std::string &zip
             ret = true;
         } else {
             ret = false;
-            std::cout << "collect  file failed." << std::endl;
+            std::cout << "collect file failed." << std::endl;
         }
         zipClose(zip_file, nullptr);
     } else {
@@ -38,24 +40,15 @@ bool ZlibHelper::CreateZipFromDir(const std::string &dir, const std::string &zip
 }
 
 bool ZlibHelper::CheckExistFile(const std::string &filename) {
-//    bool ret = false;
-//    FILE *test_file = nullptr;
-//    test_file = fopen(filename.c_str(), "rb");
-//    if (test_file == nullptr) {
-//        ret = false;
-//    } else {
-//        ret = true;
-//        fclose(test_file);
-//    }
     bool ret = false;
     struct stat info{};
     if (stat(filename.c_str(), &info) != 0) {
         std::cout << "can't access "<< filename << std::endl;
     } else if (info.st_mode & S_IFDIR) {
-        std::cout << filename << " is a directory" << std::endl;
+//        std::cout << filename << " is a directory" << std::endl;
     } else if (info.st_mode & S_IFREG) {
         ret = true;
-        std::cout << filename << " is a file" << std::endl;
+//        std::cout << filename << " is a file" << std::endl;
     } else {
         std::cout << filename << " is not exit!" << std::endl;
     }
@@ -71,10 +64,9 @@ bool ZlibHelper::CollectFileToZip(zipFile zip_file, const std::string &file_path
         if (CheckExistDir(file_path)) {
             std::vector<std::string> output_files;
             std::vector<std::string> output_dies;
-            ZlibHelper::GetAllFiles(".",output_files,output_dies);
-
+            ret = GetAllFiles(zip_file, file_path,output_files,output_dies);
         } else if (CheckExistFile(file_path)) { // 如果是文件
-
+            ret = AddFileToZip(zip_file, file_path, false);
         } else {
             ret = false;
         }
@@ -90,9 +82,9 @@ bool ZlibHelper::CheckExistDir(const std::string &dir) {
         std::cout << "can't access "<< dir << std::endl;
     } else if (info.st_mode & S_IFDIR) {
         ret = true;
-        std::cout << dir << " is a directory" << std::endl;
+//        std::cout << dir << " is a directory" << std::endl;
     } else if (info.st_mode & S_IFREG) {
-        std::cout << dir << " is a file" << std::endl;
+//        std::cout << dir << " is a file" << std::endl;
     } else {
         std::cout << dir << " is not exit!" << std::endl;
     }
@@ -100,7 +92,7 @@ bool ZlibHelper::CheckExistDir(const std::string &dir) {
     return ret;
 }
 
-bool ZlibHelper::GetAllFiles(const std::string &input_dir, std::vector<std::string> &output_files,
+bool ZlibHelper::GetAllFiles(zipFile zip_file, const std::string &input_dir, std::vector<std::string> &output_files,
                              std::vector<std::string> &output_dirs) {
 
     if (input_dir.empty()) {
@@ -115,26 +107,39 @@ bool ZlibHelper::GetAllFiles(const std::string &input_dir, std::vector<std::stri
     if (open_dir == nullptr) {
         return false;
     }
-    dirent *p = nullptr;
-    while ((p = readdir(open_dir)) != nullptr) {
+    dirent *ent = nullptr;
+    bool is_empty_dir = true;
+    while ((ent = readdir(open_dir)) != nullptr) {
         struct stat st{};
-        if (strcmp(p->d_name,".") == 0 || strcmp(p->d_name,"..") == 0) {
+        if (strcmp(ent->d_name,".") == 0 || strcmp(ent->d_name,"..") == 0) {
             continue;
         }
-        std::string name = input_dir + std::string("/") + std::string(p->d_name);
+        std::string name = input_dir + std::string("/") + std::string(ent->d_name);
         stat(name.c_str(), &st);
         if (S_ISDIR(st.st_mode)) {
             output_dirs.push_back(name);
-            GetAllFiles(name, output_files, output_dirs);
+            GetAllFiles(zip_file, name, output_files, output_dirs);
         } else if (S_ISREG(st.st_mode)) {
+            if (zip_file != nullptr) {
+                AddFileToZip(zip_file, name, false);
+            }
             output_files.push_back(name);
         }
+        if ((ent->d_type == DT_DIR) || (ent->d_type == DT_REG)) {
+            is_empty_dir = false;
+        }
+    }
+    if (is_empty_dir) {
+        if (zip_file != nullptr) {
+            AddFileToZip(zip_file, input_dir, true);
+        }
+        std::cout << input_dir << " is empty directory" << std::endl;
     }
     closedir(open_dir);
     return true;
 }
 
-bool ZlibHelper::AddFileToZip(zipFile zip_file, const std::string &file_name_in_zip, const std::string &src_file) {
+bool ZlibHelper::AddFileToZip(zipFile zip_file, const std::string &file_name_in_zip, bool is_dir) {
 
     if (zip_file == nullptr || file_name_in_zip.empty()) {
         return false;
@@ -147,8 +152,7 @@ bool ZlibHelper::AddFileToZip(zipFile zip_file, const std::string &file_name_in_
     zinfo.internal_fa = 0;
     zinfo.external_fa = 0;
     std::string new_file_name = file_name_in_zip;
-    if (src_file.empty())
-    {
+    if (is_dir) {
         new_file_name = file_name_in_zip + "/";
     }
     err = zipOpenNewFileInZip(zip_file, new_file_name.c_str(), &zinfo, NULL, 0, NULL, 0, NULL, Z_DEFLATED, Z_DEFAULT_COMPRESSION);
@@ -157,8 +161,37 @@ bool ZlibHelper::AddFileToZip(zipFile zip_file, const std::string &file_name_in_
         return false;
     }
 
-//    if (!src_file.empty()) {
-//        FILE* srcfp = _fsopen(src_file.c_str(), "rb", _SH_DENYNO);
-//    }
-    return false;
+    if (!is_dir) {
+        FILE * fin = fopen(file_name_in_zip.c_str(), "rb");
+        if (fin != nullptr) {
+            size_t size_read;
+            do {
+                err = ZIP_OK;
+                unsigned char buf[WRITE_BUFFER_SIZE];
+                size_read = fread(buf,1,WRITE_BUFFER_SIZE,fin);
+                if (size_read < WRITE_BUFFER_SIZE) {
+                    if (feof(fin) == 0) {
+                        std::cout << "error in reading " << file_name_in_zip << std::endl;
+                        err = ZIP_ERRNO;
+                    }
+                }
+                if (size_read > 0) {
+                    err = zipWriteInFileInZip(zip_file, buf,(unsigned)size_read);
+                    if (err < 0) {
+                        std::cout << "error in writing " << file_name_in_zip << " in the zipfile" << std::endl;
+                    }
+                }
+            } while ((err == ZIP_OK) && (size_read > 0));
+        } else {
+            err = ZIP_ERRNO;
+            std::cout << "error in opening  " << file_name_in_zip << " for reading" << std::endl;
+        }
+    }
+
+    zipCloseFileInZip(zip_file);
+    return true;
+}
+
+int ZlibHelper::AddFileTime(const std::string &file, tm_zip *tmzip, unsigned long *dt) {
+    return 0;
 }

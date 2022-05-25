@@ -13,7 +13,7 @@ public:
     ~ZlibHelper();
 
     static bool CreateZipFromDir(const std::string &dir, const std::string &zip_name);
-    static bool GetAllFiles(const std::string &input_dir, std::vector<std::string>& output_files, std::vector<std::string>& output_dirs);
+    static bool GetAllFiles(zipFile zip_file, const std::string &input_dir, std::vector<std::string>& output_files, std::vector<std::string>& output_dirs);
 
 private:
     static bool CheckExistFile(const std::string &filename);
@@ -22,8 +22,9 @@ private:
 
     static bool CollectFileToZip(zipFile zip_file, const std::string &file_path);
 
-    static bool AddFileToZip(zipFile zip_file, const std::string & file_name_in_zip, const std::string &src_file);
+    static bool AddFileToZip(zipFile zip_file, const std::string & file_name_in_zip, bool is_dir);
 
+    static int AddFileTime(const std::string &file, tm_zip *tmzip, unsigned long *dt);
 };
 
 #endif

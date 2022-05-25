@@ -13,17 +13,18 @@ int main() {
     ZlibHelper helper;
     std::vector<std::string> output_files;
     std::vector<std::string> output_dies;
-    ZlibHelper::GetAllFiles(".",output_files,output_dies);
-    for(auto & file : output_files)
-    {
-        std::cout << file << std::endl;
-    }
-    std::cout << "===========================" << std::endl;
-    for(auto & dir : output_dies)
-    {
-        std::cout << dir << std::endl;
-    }
+//    ZlibHelper::GetAllFiles(nullptr, ".",output_files,output_dies);
+//    for(auto & file : output_files)
+//    {
+//        std::cout << file << std::endl;
+//    }
+//    std::cout << "===========================" << std::endl;
+//    for(auto & dir : output_dies)
+//    {
+//        std::cout << dir << std::endl;
+//    }
 
+    ZlibHelper::CreateZipFromDir("/Users/yuhaoo/workspace/tmp","/Users/yuhaoo/workspace/tmp.zip");
 
     return 1;
 }
