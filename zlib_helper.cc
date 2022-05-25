@@ -69,6 +69,9 @@ bool ZlibHelper::CollectFileToZip(zipFile zip_file, const std::string &file_path
     } else {
         // 如果是目录
         if (CheckExistDir(file_path)) {
+            std::vector<std::string> output_files;
+            std::vector<std::string> output_dies;
+            ZlibHelper::GetAllFiles(".",output_files,output_dies);
 
         } else if (CheckExistFile(file_path)) { // 如果是文件
 
@@ -129,4 +132,33 @@ bool ZlibHelper::GetAllFiles(const std::string &input_dir, std::vector<std::stri
     }
     closedir(open_dir);
     return true;
+}
+
+bool ZlibHelper::AddFileToZip(zipFile zip_file, const std::string &file_name_in_zip, const std::string &src_file) {
+
+    if (zip_file == nullptr || file_name_in_zip.empty()) {
+        return false;
+    }
+    int err = 0;
+    zip_fileinfo zinfo = {0};
+    tm_zip  tmz = {0};
+    zinfo.tmz_date = tmz;
+    zinfo.dosDate = 0;
+    zinfo.internal_fa = 0;
+    zinfo.external_fa = 0;
+    std::string new_file_name = file_name_in_zip;
+    if (src_file.empty())
+    {
+        new_file_name = file_name_in_zip + "/";
+    }
+    err = zipOpenNewFileInZip(zip_file, new_file_name.c_str(), &zinfo, NULL, 0, NULL, 0, NULL, Z_DEFLATED, Z_DEFAULT_COMPRESSION);
+    if (err != ZIP_OK) {
+        std::cout << "AddFileToZip file: " << file_name_in_zip << " err:"<< err << std::endl;
+        return false;
+    }
+
+//    if (!src_file.empty()) {
+//        FILE* srcfp = _fsopen(src_file.c_str(), "rb", _SH_DENYNO);
+//    }
+    return false;
 }

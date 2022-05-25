@@ -12,3 +12,5 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/minizip)
 add_executable(zlib-test-sample main.cpp zlib_helper.cc)
 
 target_link_libraries(zlib-test-sample mini-zip)
+
+

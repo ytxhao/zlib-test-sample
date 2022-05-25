@@ -22,6 +22,8 @@ private:
 
     static bool CollectFileToZip(zipFile zip_file, const std::string &file_path);
 
+    static bool AddFileToZip(zipFile zip_file, const std::string & file_name_in_zip, const std::string &src_file);
+
 };
 
 #endif
