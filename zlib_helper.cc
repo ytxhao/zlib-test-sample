@@ -209,13 +209,12 @@ int ZlibHelper::AddFileTime(const std::string &file, tm_zip *tmz_date, unsigned 
     struct stat s;
     struct tm *file_date;
     time_t tm_t = 0;
-    if (strcmp(file.c_str(), "-") != 0) {
-        if (stat(file.c_str(), &s)==0)
-        {
-            tm_t = s.st_mtime;
-            ret = 1;
-        }
+//    if (strcmp(file.c_str(), "-") != 0) {
+    if (stat(file.c_str(), &s)==0) {
+        tm_t = s.st_mtime;
+        ret = 1;
     }
+//    }
 
     file_date = localtime(&tm_t);
     tmz_date->tm_sec  = file_date->tm_sec;
