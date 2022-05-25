@@ -64,9 +64,15 @@ bool ZlibHelper::CollectFileToZip(zipFile zip_file, const std::string &file_path
         if (CheckExistDir(file_path)) {
             std::vector<std::string> output_files;
             std::vector<std::string> output_dies;
-            ret = GetAllFiles(zip_file, file_path,output_files,output_dies);
+            ret = GetAllFiles(zip_file, file_path, file_path, output_files,output_dies);
         } else if (CheckExistFile(file_path)) { // 如果是文件
-            ret = AddFileToZip(zip_file, file_path, false);
+            unsigned int last_dir_index = file_path.rfind('/');
+            if (last_dir_index == -1) {
+                ret = AddFileToZip(zip_file, file_path, file_path, false);
+            } else {
+                std::string file_name_in_zip = file_path.substr(last_dir_index + 1);
+                ret = AddFileToZip(zip_file, file_name_in_zip, file_path, false);
+            }
         } else {
             ret = false;
         }
@@ -92,7 +98,7 @@ bool ZlibHelper::CheckExistDir(const std::string &dir) {
     return ret;
 }
 
-bool ZlibHelper::GetAllFiles(zipFile zip_file, const std::string &input_dir, std::vector<std::string> &output_files,
+bool ZlibHelper::GetAllFiles(zipFile zip_file, const std::string &input_dir, const std::string &home_dir, std::vector<std::string> &output_files,
                              std::vector<std::string> &output_dirs) {
 
     if (input_dir.empty()) {
@@ -118,10 +124,12 @@ bool ZlibHelper::GetAllFiles(zipFile zip_file, const std::string &input_dir, std
         stat(name.c_str(), &st);
         if (S_ISDIR(st.st_mode)) {
             output_dirs.push_back(name);
-            GetAllFiles(zip_file, name, output_files, output_dirs);
+            GetAllFiles(zip_file, name, home_dir, output_files, output_dirs);
         } else if (S_ISREG(st.st_mode)) {
             if (zip_file != nullptr) {
-                AddFileToZip(zip_file, name, false);
+                unsigned int last_dir_index = home_dir.rfind('/');
+                std::string file_name_in_zip = name.substr(last_dir_index + 1);
+                AddFileToZip(zip_file, file_name_in_zip, name, false);
             }
             output_files.push_back(name);
         }
@@ -131,7 +139,9 @@ bool ZlibHelper::GetAllFiles(zipFile zip_file, const std::string &input_dir, std
     }
     if (is_empty_dir) {
         if (zip_file != nullptr) {
-            AddFileToZip(zip_file, input_dir, true);
+            unsigned int last_dir_index = home_dir.rfind('/');
+            std::string file_name_in_zip = input_dir.substr(last_dir_index + 1);
+            AddFileToZip(zip_file, file_name_in_zip, input_dir, true);
         }
         std::cout << input_dir << " is empty directory" << std::endl;
     }
@@ -139,7 +149,7 @@ bool ZlibHelper::GetAllFiles(zipFile zip_file, const std::string &input_dir, std
     return true;
 }
 
-bool ZlibHelper::AddFileToZip(zipFile zip_file, const std::string &file_name_in_zip, bool is_dir) {
+bool ZlibHelper::AddFileToZip(zipFile zip_file, const std::string &file_name_in_zip, const std::string &file_path, bool is_dir) {
 
     if (zip_file == nullptr || file_name_in_zip.empty()) {
         return false;
@@ -162,7 +172,7 @@ bool ZlibHelper::AddFileToZip(zipFile zip_file, const std::string &file_name_in_
     }
 
     if (!is_dir) {
-        FILE * fin = fopen(file_name_in_zip.c_str(), "rb");
+        FILE * fin = fopen(file_path.c_str(), "rb");
         if (fin != nullptr) {
             size_t size_read;
             do {
@@ -171,20 +181,20 @@ bool ZlibHelper::AddFileToZip(zipFile zip_file, const std::string &file_name_in_
                 size_read = fread(buf,1,WRITE_BUFFER_SIZE,fin);
                 if (size_read < WRITE_BUFFER_SIZE) {
                     if (feof(fin) == 0) {
-                        std::cout << "error in reading " << file_name_in_zip << std::endl;
+                        std::cout << "error in reading " << file_path << std::endl;
                         err = ZIP_ERRNO;
                     }
                 }
                 if (size_read > 0) {
                     err = zipWriteInFileInZip(zip_file, buf,(unsigned)size_read);
                     if (err < 0) {
-                        std::cout << "error in writing " << file_name_in_zip << " in the zipfile" << std::endl;
+                        std::cout << "error in writing " << file_path << " in the zipfile" << std::endl;
                     }
                 }
             } while ((err == ZIP_OK) && (size_read > 0));
         } else {
             err = ZIP_ERRNO;
-            std::cout << "error in opening  " << file_name_in_zip << " for reading" << std::endl;
+            std::cout << "error in opening  " << file_path << " for reading" << std::endl;
         }
     }
 
