@@ -43,14 +43,14 @@ bool ZlibHelper::CheckExistFile(const std::string &filename) {
     bool ret = false;
     struct stat info{};
     if (stat(filename.c_str(), &info) != 0) {
-        std::cout << "can't access "<< filename << std::endl;
+//        std::cout << "can't access "<< filename << std::endl;
     } else if (info.st_mode & S_IFDIR) {
 //        std::cout << filename << " is a directory" << std::endl;
     } else if (info.st_mode & S_IFREG) {
         ret = true;
 //        std::cout << filename << " is a file" << std::endl;
     } else {
-        std::cout << filename << " is not exit!" << std::endl;
+//        std::cout << filename << " is not exit!" << std::endl;
     }
     return ret;
 }
