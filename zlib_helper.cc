@@ -286,22 +286,21 @@ bool ZlibHelper::UnzipFile(const std::string &strFilePath, const std::string &st
             tempFilePath = dest_home_path + "/" + szZipFName;
             strFullFilePath = tempFilePath;//保存完整路径
             int nPos = dest_home_path.rfind("/");
-            int nPosRev = dest_home_path.rfind("/");
-            if (nPosRev == std::string::npos && nPos == std::string::npos)
+            if (nPos == std::string::npos)
             {
                 continue;
             }
 
-            size_t nSplitPos = nPos > nPosRev ? nPos : nPosRev;
+            size_t nSplitPos =  nPos;
             destFilePath = tempFilePath.substr(0, nSplitPos + 1);
 
-            if (!CheckExistDir(destFilePath))
-            {
-                //将路径格式统一
-//                destFilePath = replace_all(destFilePath, "/", "\\");
-                //创建多级目录
-                int bRet = CreatedMultipleDirectory(destFilePath);
-            }
+//            if (!CheckExistDir(destFilePath))
+//            {
+//                //将路径格式统一
+////                destFilePath = replace_all(destFilePath, "/", "\\");
+//                //创建多级目录
+//                int bRet = CreatedMultipleDirectory(destFilePath);
+//            }
 //            strFullFilePath = replace_all(strFullFilePath, "/", "\\");
 
             FILE* ftestexist = fopen(strFullFilePath.c_str(), "rb");
