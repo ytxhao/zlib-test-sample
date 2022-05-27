@@ -238,6 +238,8 @@ bool ZlibHelper::UnzipFile(const std::string &strFilePath, const std::string &st
     std::string dest_home_path;
     if ((strTempPath.rfind('/') == strTempPath.length() - 1)) {
         dest_home_path = strTempPath.substr(0,strTempPath.length() - 1);
+    } else {
+        dest_home_path = strTempPath;
     }
     // 如果输出目录不存在则创建
     if (!CheckExistDir(dest_home_path)) {

@@ -25,7 +25,7 @@ int main() {
 //    }
 //    ZlibHelper::CreateZipFromDir("/Users/yuhaoo/workspace/tmp","/Users/yuhaoo/workspace/tmp.zip");
 //    ZlibHelper::CreateZipFromDir("/Users/yuhaoo/workspace/libzegoliveroom.so","/Users/yuhaoo/workspace/tmp2.zip");
-    ZlibHelper::UnzipFile("/Users/yuhaoo/workspace/tmp.zip", "/Users/yuhaoo/workspace/tmp_unzip");
+    ZlibHelper::UnzipFile("/Users/yuhaoo/workspace/tmp.zip", "/Users/yuhaoo/workspace/tmp_unzip/");
     return 1;
 }
 int main1() {
