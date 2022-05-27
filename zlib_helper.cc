@@ -230,17 +230,17 @@ int ZlibHelper::AddFileTime(const std::string &file, tm_zip *tmz_date, unsigned 
     return ret;
 }
 
-bool ZlibHelper::UnzipFile(const std::string &strFilePath, const std::string &strTempPath) {
+bool ZlibHelper::UnzipFile(const std::string& zip_file_path, const std::string& output_path) {
+//bool ZlibHelper::UnzipFile(const std::string &strFilePath, const std::string &strTempPath) {
     std::cout << "Start unpacking the package... " << std::endl;
-    std::string tempFilePath;
-    std::string srcFilePath(strFilePath);
-    std::string destFilePath;
+    std::string temp_file_path;
+    std::string dest_file_path;
 
     std::string dest_home_path;
-    if ((strTempPath.rfind('/') == strTempPath.length() - 1)) {
-        dest_home_path = strTempPath.substr(0,strTempPath.length() - 1);
+    if ((output_path.rfind('/') == output_path.length() - 1)) {
+        dest_home_path = output_path.substr(0,output_path.length() - 1);
     } else {
-        dest_home_path = strTempPath;
+        dest_home_path = output_path;
     }
     // 如果输出目录不存在则创建
     if (!CheckExistDir(dest_home_path)) {
@@ -248,87 +248,78 @@ bool ZlibHelper::UnzipFile(const std::string &strFilePath, const std::string &st
     }
 
     //打开zip文件
-    unzFile unzip_file = unzOpen(strFilePath.c_str());
+    unzFile unzip_file = unzOpen(zip_file_path.c_str());
     if (unzip_file == nullptr)
     {
         std::cout << "unzOpen failed." << std::endl;
         return false;
     }
     //获取zip文件的信息
-    unz_global_info* pGlobalInfo = new unz_global_info;
-    int nReturnValue = unzGetGlobalInfo(unzip_file, pGlobalInfo);
+    unz_global_info global_info = {};
+    int nReturnValue = unzGetGlobalInfo(unzip_file, &global_info);
     if (nReturnValue != UNZ_OK) {
         std::cout << "unzGetGlobalInfo failed. code :"<< nReturnValue << std::endl;
         return false;
     }
 
     //解析zip文件
-    unz_file_info* pFileInfo = new unz_file_info;
-    char szZipFName[MAX_PATH] = { 0 };
-    char szExtraName[MAX_PATH] = { 0 };
-    char szCommName[MAX_PATH] = { 0 };
+    unz_file_info file_info = {};
+    char sz_zip_file_name[MAX_PATH] = {0 };
+    char sz_extra_name[MAX_PATH] = {0 };
+    char sz_comm_name[MAX_PATH] = {0 };
 
     //存放从zip中解析出来的内部文件名
-    for (int i = 0; i < (int)pGlobalInfo->number_entry; i++) {
+    for (int i = 0; i < (int)global_info.number_entry; i++) {
         //解析得到zip中的文件信息
-        nReturnValue = unzGetCurrentFileInfo(unzip_file, pFileInfo, szZipFName, MAX_PATH, szExtraName, MAX_PATH, szCommName, MAX_PATH);
+        nReturnValue = unzGetCurrentFileInfo(unzip_file, &file_info, sz_zip_file_name, MAX_PATH, sz_extra_name, MAX_PATH, sz_comm_name, MAX_PATH);
         if (nReturnValue != UNZ_OK) {
             std::cout << "nzGetCurrentFileInfo failed. code :"<< nReturnValue << std::endl;
             return false;
         }
-        std::cout << "ZipName: " << szZipFName << "  Extra: " << szExtraName << "  Comm: " << szCommName << std::endl;
-        std::string strZipFName = szZipFName;
-        if (pFileInfo->external_fa == FILE_ATTRIBUTE_DIRECTORY || (strZipFName.rfind('/') == strZipFName.length() - 1)) {
-            destFilePath = dest_home_path + "/" + szZipFName;
-            CreatedMultipleDirectory(destFilePath);
-            ChangeFileDate(destFilePath, pFileInfo->dosDate, pFileInfo->tmu_date);
+        std::cout << "ZipName: " << sz_zip_file_name << std::endl;
+//        std::cout << "ZipName: " << sz_zip_file_name << "  Extra: " << sz_extra_name << "  Comm: " << sz_comm_name << std::endl;
+        std::string str_zip_file_name = sz_zip_file_name;
+        if (file_info.external_fa == FILE_ATTRIBUTE_DIRECTORY || (str_zip_file_name.rfind('/') == str_zip_file_name.length() - 1)) {
+            dest_file_path = dest_home_path + "/" + sz_zip_file_name;
+            CreatedMultipleDirectory(dest_file_path);
+            ChangeFileDate(dest_file_path, file_info.dosDate, file_info.tmu_date);
         } else {
             // 创建文件
-            std::string strFullFilePath;
-            tempFilePath = dest_home_path + "/" + szZipFName;
-            strFullFilePath = tempFilePath;//保存完整路径
+            std::string str_full_file_path;
+            temp_file_path = dest_home_path + "/" + sz_zip_file_name;
+            str_full_file_path = temp_file_path;//保存完整路径
             int nPos = dest_home_path.rfind("/");
-            if (nPos == std::string::npos)
-            {
+            if (nPos == std::string::npos){
                 continue;
             }
 
             size_t nSplitPos =  nPos;
-            destFilePath = tempFilePath.substr(0, nSplitPos + 1);
+            dest_file_path = temp_file_path.substr(0, nSplitPos + 1);
 
-//            if (!CheckExistDir(destFilePath))
-//            {
-//                //将路径格式统一
-////                destFilePath = replace_all(destFilePath, "/", "\\");
-//                //创建多级目录
-//                int bRet = CreatedMultipleDirectory(destFilePath);
-//            }
-//            strFullFilePath = replace_all(strFullFilePath, "/", "\\");
-
-            FILE* ftestexist = fopen(strFullFilePath.c_str(), "rb");
+            FILE* ftestexist = fopen(str_full_file_path.c_str(), "rb");
             if (ftestexist!=NULL) {
                 fclose(ftestexist);
-                std::cout <<"The file "<< strFullFilePath << " exists。 It's will overwrite." << std::endl;
+                std::cout << "The file " << str_full_file_path << " exists. It's will overwrite." << std::endl;
             }
-            FILE *fout = fopen(strFullFilePath.c_str(), "wb");
+            FILE *fout = fopen(str_full_file_path.c_str(), "wb");
             nReturnValue = unzOpenCurrentFile(unzip_file);
             if (nReturnValue != UNZ_OK)
             {
                 fclose(fout);
                 fout = nullptr;
-                std::cout << "unzOpenCurrentFile "<< strFullFilePath <<" failed." << std::endl;
+                std::cout << "unzOpenCurrentFile " << str_full_file_path << " failed." << std::endl;
                 return false;
             }
 
             //读取文件
-            uLong BUFFER_SIZE = pFileInfo->uncompressed_size;;
+            uLong BUFFER_SIZE = file_info.uncompressed_size;;
             void* szReadBuffer = NULL;
             szReadBuffer = (char*)malloc(BUFFER_SIZE);
             if (NULL == szReadBuffer)
             {
                 break;
             }
-            std::cout << "extracting:  "<< strFullFilePath << std::endl;
+            std::cout << "extracting:  " << str_full_file_path << std::endl;
             while (true) {
                 memset(szReadBuffer, 0, BUFFER_SIZE);
                 int nReadFileSize = 0;
@@ -345,7 +336,7 @@ bool ZlibHelper::UnzipFile(const std::string &strFilePath, const std::string &st
                     unzCloseCurrentFile(unzip_file);
                     fclose(fout);
                     fout = nullptr;
-                    ChangeFileDate(strFullFilePath, pFileInfo->dosDate, pFileInfo->tmu_date);
+                    ChangeFileDate(str_full_file_path, file_info.dosDate, file_info.tmu_date);
                     printf("读取文件完毕");
                     break;
                 } else {
@@ -364,15 +355,6 @@ bool ZlibHelper::UnzipFile(const std::string &strFilePath, const std::string &st
             free(szReadBuffer);
         }
         unzGoToNextFile(unzip_file);
-    }
-
-    if (pFileInfo){
-        delete pFileInfo;
-        pFileInfo = NULL;
-    }
-    if (pGlobalInfo){
-        delete pGlobalInfo;
-        pGlobalInfo = NULL;
     }
 
     //关闭
