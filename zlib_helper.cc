@@ -4,6 +4,7 @@
 #include <sys/stat.h>
 #include <dirent.h>
 #include <vector>
+#include <utime.h>
 
 #define WRITE_BUFFER_SIZE (16384)
 #define MAX_FILENAME (256)
@@ -280,6 +281,7 @@ bool ZlibHelper::UnzipFile(const std::string &strFilePath, const std::string &st
         if (pFileInfo->external_fa == FILE_ATTRIBUTE_DIRECTORY || (strZipFName.rfind('/') == strZipFName.length() - 1)) {
             destFilePath = dest_home_path + "/" + szZipFName;
             CreatedMultipleDirectory(destFilePath);
+            ChangeFileDate(destFilePath, pFileInfo->dosDate, pFileInfo->tmu_date);
         } else {
             // 创建文件
             std::string strFullFilePath;
@@ -343,6 +345,7 @@ bool ZlibHelper::UnzipFile(const std::string &strFilePath, const std::string &st
                     unzCloseCurrentFile(unzip_file);
                     fclose(fout);
                     fout = nullptr;
+                    ChangeFileDate(strFullFilePath, pFileInfo->dosDate, pFileInfo->tmu_date);
                     printf("读取文件完毕");
                     break;
                 } else {
@@ -417,4 +420,24 @@ int ZlibHelper::CreateDirectory(const std::string &dir) {
         ret = mkdir(dir.c_str(), 0775);
     }
     return ret;
+}
+
+void ZlibHelper::ChangeFileDate(const std::string &filename, unsigned long dos_date, tm_unz tmu_date) {
+
+    (void)dos_date;
+    struct utimbuf ut;
+    struct tm new_date;
+    new_date.tm_sec = tmu_date.tm_sec;
+    new_date.tm_min = tmu_date.tm_min;
+    new_date.tm_hour = tmu_date.tm_hour;
+    new_date.tm_mday = tmu_date.tm_mday;
+    new_date.tm_mon = tmu_date.tm_mon;
+    if (tmu_date.tm_year > 1900)
+        new_date.tm_year=tmu_date.tm_year - 1900;
+    else
+        new_date.tm_year=tmu_date.tm_year ;
+    new_date.tm_isdst=-1;
+
+    ut.actime = ut.modtime = mktime(&new_date);
+    utime(filename.c_str(), &ut);
 }

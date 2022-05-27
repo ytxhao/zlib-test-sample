@@ -29,6 +29,8 @@ private:
     static int AddFileTime(const std::string &file, tm_zip *tmz_date, unsigned long *dos_date);
 
     static int CreateDirectory(const std::string &dir);
+
+    static void ChangeFileDate(const std::string & filename,  unsigned long dos_date, tm_unz tmu_date);
 };
 
 #endif
