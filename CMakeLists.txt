@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 3.16)
 project(zlib-test-sample)
-
+set(CMAKE_MACOSX_RPATH 0)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_VERBOSE_MAKEFILE ON)
-
+add_subdirectory(zlib-1.2.12)
 add_subdirectory(minizip)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/minizip)
 #include_directories("/Users/yuhaoo/CLionProjects/zlib-1.2.12")
