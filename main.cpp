@@ -23,9 +23,9 @@ int main() {
 //    {
 //        std::cout << dir << std::endl;
 //    }
-//    ZlibHelper::CreateZipFromDir("/Users/yuhaoo/workspace/tmp","/Users/yuhaoo/workspace/tmp.zip");
-//    ZlibHelper::CreateZipFromDir("/Users/yuhaoo/workspace/libzegoliveroom.so","/Users/yuhaoo/workspace/tmp2.zip");
-    ZlibHelper::UnzipFile("/Users/yuhaoo/workspace/tmp.zip", "/Users/yuhaoo/workspace/tmp_unzip/");
+    ZlibHelper::CreateZipFromDir("/Users/yuhao/workspace/tmp","/Users/yuhao/workspace/tmp.zip");
+//    ZlibHelper::CreateZipFromDir("/Users/yuhao/workspace/libzegoliveroom.so","/Users/yuhaoo/workspace/tmp2.zip");
+//    ZlibHelper::UnzipFile("/Users/yuhaoo/workspace/tmp.zip", "/Users/yuhaoo/workspace/tmp_unzip/");
     return 1;
 }
 int main1() {
