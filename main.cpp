@@ -25,7 +25,7 @@ int main() {
 //        std::cout << dir << std::endl;
 //    }
     std::unique_ptr<FILE, std::function<void(FILE *)>> pPushDataFile;
-    std::unique_ptr<FILE, std::function<void(FILE *)>> pFile(fopen("zorro_push_data.txt", "wb"),
+    std::unique_ptr<FILE, std::function<void(FILE *)>> pFile(fopen("/Users/yuhao/workspace/tmp/zorro_push_data.txt", "wb"),
                                                              [](FILE *file) {
                                                                  std::cout << "file zorro_push_data.pcm close" << std::endl;
                                                                  fclose(file);
@@ -38,7 +38,7 @@ int main() {
         std::stringstream sstream;
 
         while (!t_stop) {
-            std::this_thread::sleep_for (std::chrono::milliseconds(1000));
+            std::this_thread::sleep_for (std::chrono::milliseconds(50));
             auto now = std::chrono::system_clock::now();
             auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch());
             char now_str[64];
@@ -57,8 +57,8 @@ int main() {
 //            buffer[4] = 'o';
 //            size_t write_size = fwrite(buffer, sizeof(char), 5, pFile);
             std::string str(sstream.str());
-            size_t write_size = fwrite(str.c_str(), str.length(), 1, pPushDataFile.get());
-            std::cout << sstream.str() << "write_size:"<< write_size <<std::endl;
+            fwrite(str.c_str(), str.length(), 1, pPushDataFile.get());
+//            std::cout << sstream.str() << "write_size:"<< write_size <<std::endl;
 //            stringstream对象时要先继续清空，而清空很容易想到是clear方法，
 //            而在stringstream中这个方法实际上是清空stringstream的状态（比如出错等），
 //            真正清空内容需要使用.str("")方法。
@@ -69,10 +69,13 @@ int main() {
 
         }
     });
-    ZlibHelper::CreateZipFromDir("/Users/yuhao/workspace/tmp","/Users/yuhao/workspace/tmp.zip");
+
 //    ZlibHelper::CreateZipFromDir("/Users/yuhao/workspace/libzegoliveroom.so","/Users/yuhaoo/workspace/tmp2.zip");
 //    ZlibHelper::UnzipFile("/Users/yuhaoo/workspace/tmp.zip", "/Users/yuhaoo/workspace/tmp_unzip/");
     getchar();
+
+    ZlibHelper::CreateZipFromDir("/Users/yuhao/workspace/tmp","/Users/yuhao/workspace/tmp.zip");
+    std::this_thread::sleep_for (std::chrono::milliseconds(1000));
     fclose(pPushDataFile.get());
     t_stop = true;
     thread.join();
