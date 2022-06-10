@@ -453,7 +453,11 @@ bool ZlibHelper::RemoveDir(const std::string &file_path) {
     dirent *dir_info;
     if(IsFile(file_path)){
         std::cout << "rm file " << file_path << std::endl;
-        remove(file_path.c_str());
+        int status = remove(file_path.c_str());
+        if (status != 0) {
+            std::cout << "Error:" << file_path << std::endl;
+            std::cout << "Error:" << strerror(errno) << std::endl;
+        }
         return true;
     }
 
