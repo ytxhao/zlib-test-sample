@@ -17,6 +17,13 @@ public:
 
     static bool UnzipFile(const std::string& zip_file_path, const std::string& output_path);
     static bool CreatedMultipleDirectory(const std::string& dir);
+    static bool CreateTarFile(const std::string &file_path, const std::string &tar_file_name);
+    static bool CreateTarArchive();
+
+    static bool IsDir(const std::string &file_path);
+    static bool IsFile(const std::string &file_path);
+    static bool IsSpecialDir(const std::string &file_path);
+    static bool RemoveDir(const std::string &file_path);
 private:
     static bool CheckExistFile(const std::string &filename);
 

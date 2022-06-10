@@ -9,7 +9,7 @@ void CreateZipFromDir(std::string dirName, std::string zipFileName) {
 
 }
 
-int main() {
+int main1() {
 
     ZlibHelper helper;
     std::vector<std::string> output_files;
@@ -81,8 +81,8 @@ int main() {
     thread.join();
     return 1;
 }
-int main1() {
-    std::cout << "qHello, World!" << std::endl;
+int main() {
+    std::cout << "Hello, World!" << std::endl;
     char now[64];
     struct std::tm *ttime;
     time_t tt = 1652691410;
@@ -90,8 +90,9 @@ int main1() {
     std::strftime(now, 64, "%Y-%m-%d %H:%M:%S", ttime);
     std::stringstream ss;
     ss << now;//<< std::endl;
-
-
     std::cout << ss.str() + "." +std::to_string(1652691410983%1000) << std::endl;
+
+    ZlibHelper::RemoveDir("/Users/yuhao/temp2");
+//    ZlibHelper::CreateTarFile("/Users/yuhao/temp","/Users/yuhao/temp3.tar");
     return 0;
 }

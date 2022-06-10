@@ -423,3 +423,198 @@ void ZlibHelper::ChangeFileDate(const std::string &filename, unsigned long dos_d
     ut.actime = ut.modtime = mktime(&new_date);
     utime(filename.c_str(), &ut);
 }
+
+
+bool ZlibHelper::IsDir(const std::string &file_path) {
+    bool ret = false;
+    struct stat info{};
+    if ((stat(file_path.c_str(), &info)) == 0 && (info.st_mode & S_IFDIR)) {
+        ret = true;
+    }
+    return ret;
+}
+
+bool ZlibHelper::IsFile(const std::string &file_path) {
+    bool ret = false;
+    struct stat info{};
+    if ((stat(file_path.c_str(), &info)) == 0 && (info.st_mode & S_IFREG)) {
+        ret = true;
+    }
+    return ret;
+}
+
+bool ZlibHelper::IsSpecialDir(const std::string &file_path) {
+    return strcmp(file_path.c_str(), ".") == 0 || strcmp(file_path.c_str(), "..") == 0;
+}
+
+bool ZlibHelper::RemoveDir(const std::string &file_path) {
+    bool ret = true;
+    DIR *dir;
+    dirent *dir_info;
+    if(IsFile(file_path)){
+        std::cout << "rm file " << file_path << std::endl;
+        remove(file_path.c_str());
+        return true;
+    }
+
+    if (IsDir(file_path)) {
+        if((dir = opendir(file_path.c_str())) == nullptr) {
+            return false;
+        }
+        while((dir_info = readdir(dir)) != nullptr) {
+            if (IsSpecialDir(dir_info->d_name)) {
+                continue;
+            }
+            std::string new_file_path;
+            if (file_path[file_path.length() - 1] != '/') {
+                new_file_path = file_path + std::string("/");
+            }
+            new_file_path.append(std::string(dir_info->d_name));
+            RemoveDir(new_file_path);
+        }
+        std::cout << "rm dir " << file_path << std::endl;
+        int status = rmdir(file_path.c_str());
+        if (status != 0) {
+            std::cout << "Error:" << file_path << std::endl;
+            std::cout << "Error:" << strerror(errno) << std::endl;
+        }
+    } else {
+        std::cout << "File " << file_path << " is not exit!"<< std::endl;
+        ret = false;
+    }
+    return ret;
+}
+
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <time.h>
+#include "tar_helper.h"
+struct exclist
+{
+    struct exclist *next, *prev;
+    int flags;
+    struct exclude *excluded;
+};
+
+void info_free_exclist (struct tar_stat_info *dir)
+{
+    struct exclist *ep = dir->exclude_list;
+
+    while (ep)
+    {
+        struct exclist *next = ep->next;
+//        free_exclude (ep->excluded);
+        free (ep);
+        ep = next;
+    }
+
+    dir->exclude_list = NULL;
+}
+
+bool ZlibHelper::CreateTarFile(const std::string &file_path, const std::string &tar_file_name) {
+    struct timespec start_time;        /* when we started execution */
+    struct timespec volume_start_time; /* when the current volume was opened*/
+    struct timespec last_stat_time;    /* when the statistics was last computed */
+//    struct timespec *ts;
+    clock_gettime(CLOCK_REALTIME, &start_time);
+    volume_start_time = start_time;
+    last_stat_time = start_time;
+    enum archive_format archive_format;
+    archive_format = GNU_FORMAT;
+    CreateTarArchive();
+    return false;
+}
+
+enum access_mode
+{
+    ACCESS_READ,
+    ACCESS_WRITE,
+    ACCESS_UPDATE
+};
+
+void xheader_xattr_free (struct xattr_array *xattr_map, size_t xattr_map_size)
+{
+    size_t scan = 0;
+
+    while (scan < xattr_map_size)
+    {
+        free (xattr_map[scan].xkey);
+        free (xattr_map[scan].xval_ptr);
+
+        ++scan;
+    }
+    free (xattr_map);
+}
+
+bool tar_stat_close(struct tar_stat_info *st)
+{
+    int status = (st->dirstream ? closedir(st->dirstream)
+                                : 0 < st->fd ? close (st->fd)
+                                             : 0);
+    st->dirstream = 0;
+    st->fd = 0;
+
+    if (status == 0)
+        return true;
+    else
+    {
+//        close_diag (st->orig_file_name);
+        return false;
+    }
+}
+void xheader_destroy (struct xheader *xhdr)
+{
+    if (xhdr->stk)
+    {
+//        obstack_free (xhdr->stk, NULL);
+        free (xhdr->stk);
+        xhdr->stk = NULL;
+    }
+    else
+        free (xhdr->buffer);
+    xhdr->buffer = 0;
+    xhdr->size = 0;
+}
+
+void tar_stat_destroy (struct tar_stat_info *st)
+{
+    tar_stat_close (st);
+    xheader_xattr_free (st->xattr_map, st->xattr_map_size);
+    free (st->orig_file_name);
+    free (st->file_name);
+    free (st->link_name);
+    free (st->uname);
+    free (st->gname);
+    free (st->cntx_name);
+    free (st->acls_a_ptr);
+    free (st->acls_d_ptr);
+    free (st->sparse_map);
+    free (st->dumpdir);
+    xheader_destroy (&st->xhdr);
+    info_free_exclist (st);
+    memset (st, 0, sizeof (*st));
+}
+struct tar_stat_info current_stat_info;
+#define MODE_WXUSR	(S_IWUSR | S_IXUSR)
+#define MODE_R		(S_IRUSR | S_IRGRP | S_IROTH)
+#define MODE_RW		(S_IWUSR | S_IWGRP | S_IWOTH | MODE_R)
+#define MODE_RWX	(S_IXUSR | S_IXGRP | S_IXOTH | MODE_RW)
+#define MODE_ALL	(S_ISUID | S_ISGID | S_ISVTX | MODE_RWX)
+void open_archive(enum access_mode wanted_access) {
+//    flush_read_ptr = gnu_flush_read;
+//    flush_write_ptr = gnu_flush_write;
+    tar_stat_destroy(&current_stat_info);
+
+    /* File descriptor for archive file.  */
+    int archive;
+
+    archive = creat("/Users/yuhao/temp2.tar", (S_IWUSR | S_IWGRP | S_IWOTH | MODE_R));
+
+}
+
+bool ZlibHelper::CreateTarArchive() {
+    open_archive(ACCESS_WRITE);
+    return false;
+}
