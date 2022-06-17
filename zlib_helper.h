@@ -13,7 +13,7 @@ public:
     ~ZlibHelper();
 
     static bool CreateZipFromDir(const std::string &dir, const std::string &zip_name);
-    static bool GetAllFiles(zipFile zip_file, const std::string &input_dir, const std::string &home_dir, std::vector<std::string>& output_files, std::vector<std::string>& output_dirs);
+    static bool GetAllFiles(zipFile zip_file, const std::string &input_dir, const std::string &home_dir);
 
     static bool UnzipFile(const std::string& zip_file_path, const std::string& output_path);
     static bool CreatedMultipleDirectory(const std::string& dir);
@@ -24,6 +24,8 @@ public:
     static bool IsFile(const std::string &file_path);
     static bool IsSpecialDir(const std::string &file_path);
     static bool RemoveDir(const std::string &file_path);
+    static bool RemoveFileInDirByRegular(const std::string &file_path, const std::string &regular);
+    static bool CreateDir(const std::string& directory_name);
 private:
     static bool CheckExistFile(const std::string &filename);
 

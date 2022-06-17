@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.16)
 project(zlib-test-sample)
 set(CMAKE_MACOSX_RPATH 0)
 set(CMAKE_CXX_STANDARD 14)
+# 显示 CMake 输出所有的编译过程
 set(CMAKE_VERBOSE_MAKEFILE ON)
 add_subdirectory(tar-1.3.4-cmake)
 add_subdirectory(zlib-1.2.12)

@@ -2,6 +2,7 @@
 #include <sstream>
 #include <vector>
 #include <thread>
+#include <regex>
 #include "zlib_helper.h"
 // 1652691410983
 
@@ -9,7 +10,7 @@ void CreateZipFromDir(std::string dirName, std::string zipFileName) {
 
 }
 
-int main1() {
+int main() {
 
     ZlibHelper helper;
     std::vector<std::string> output_files;
@@ -72,16 +73,24 @@ int main1() {
 
 //    ZlibHelper::CreateZipFromDir("/Users/yuhao/workspace/libzegoliveroom.so","/Users/yuhaoo/workspace/tmp2.zip");
 //    ZlibHelper::UnzipFile("/Users/yuhaoo/workspace/tmp.zip", "/Users/yuhaoo/workspace/tmp_unzip/");
-    getchar();
-
-    ZlibHelper::CreateZipFromDir("/Users/yuhao/workspace/tmp","/Users/yuhao/workspace/tmp.zip");
-    std::this_thread::sleep_for (std::chrono::milliseconds(1000));
-    fclose(pPushDataFile.get());
+//    getchar();
     t_stop = true;
     thread.join();
+//    bool ret = ZlibHelper::CreateDir("/Users/yuhao/workspace/tmp/di/dia");
+//    ZlibHelper::RemoveFileInDirByRegular("/Users/yuhao/workspace/tmp2",".*\\.txt");
+//    std::string file_path("/Users/yuhao/workspace/tmp2/ags.txt");
+//    std::cout << "file: " << file_path << std::endl;
+//    std::regex rule(".*\\.txt");
+//    if (regex_match(file_path, rule))
+//    std::cout <<"regex_match "<< regex_match(file_path, rule)<< std::endl;
+    ZlibHelper::CreateZipFromDir("/Users/yuhao/workspace/tmp/","/Users/yuhao/workspace/tmp.zip");
+    std::this_thread::sleep_for (std::chrono::milliseconds(1000));
+    fclose(pPushDataFile.get());
+//    t_stop = true;
+//    thread.join();
     return 1;
 }
-int main() {
+int main1() {
     std::cout << "Hello, World!" << std::endl;
     char now[64];
     struct std::tm *ttime;
@@ -92,7 +101,7 @@ int main() {
     ss << now;//<< std::endl;
     std::cout << ss.str() + "." +std::to_string(1652691410983%1000) << std::endl;
 
-    ZlibHelper::RemoveDir("/Users/yuhao/temp2");
-//    ZlibHelper::CreateTarFile("/Users/yuhao/temp","/Users/yuhao/temp3.tar");
+//    ZlibHelper::RemoveDir("/Users/yuhao/temp2");
+    ZlibHelper::CreateTarFile("/Users/yuhao/temp","/Users/yuhao/temp3.tar");
     return 0;
 }

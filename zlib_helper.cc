@@ -5,6 +5,7 @@
 #include <dirent.h>
 #include <vector>
 #include <utime.h>
+#include <regex>
 
 #define WRITE_BUFFER_SIZE (16384)
 #define MAX_FILENAME (256)
@@ -66,12 +67,10 @@ bool ZlibHelper::CollectFileToZip(zipFile zip_file, const std::string &file_path
     } else {
         // 如果是目录
         if (CheckExistDir(file_path)) {
-            std::vector<std::string> output_files;
-            std::vector<std::string> output_dies;
-            ret = GetAllFiles(zip_file, file_path, file_path, output_files,output_dies);
+            ret = GetAllFiles(zip_file, file_path, file_path);
         } else if (CheckExistFile(file_path)) { // 如果是文件
-            unsigned int last_dir_index = file_path.rfind('/');
-            if (last_dir_index == -1) {
+            size_t last_dir_index = file_path.rfind('/');
+            if (last_dir_index == std::string::npos) {
                 ret = AddFileToZip(zip_file, file_path, file_path, false);
             } else {
                 std::string file_name_in_zip = file_path.substr(last_dir_index + 1);
@@ -102,8 +101,7 @@ bool ZlibHelper::CheckExistDir(const std::string &dir) {
     return ret;
 }
 
-bool ZlibHelper::GetAllFiles(zipFile zip_file, const std::string &input_dir, const std::string &home_dir, std::vector<std::string> &output_files,
-                             std::vector<std::string> &output_dirs) {
+bool ZlibHelper::GetAllFiles(zipFile zip_file, const std::string &input_dir, const std::string &home_dir) {
 
     if (input_dir.empty()) {
         return false;
@@ -127,15 +125,13 @@ bool ZlibHelper::GetAllFiles(zipFile zip_file, const std::string &input_dir, con
         std::string name = input_dir + std::string("/") + std::string(ent->d_name);
         stat(name.c_str(), &st);
         if (S_ISDIR(st.st_mode)) {
-            output_dirs.push_back(name);
-            GetAllFiles(zip_file, name, home_dir, output_files, output_dirs);
+            GetAllFiles(zip_file, name, home_dir);
         } else if (S_ISREG(st.st_mode)) {
             if (zip_file != nullptr) {
                 unsigned int last_dir_index = home_dir.rfind('/');
                 std::string file_name_in_zip = name.substr(last_dir_index + 1);
                 AddFileToZip(zip_file, file_name_in_zip, name, false);
             }
-            output_files.push_back(name);
         }
         if ((ent->d_type == DT_DIR) || (ent->d_type == DT_REG)) {
             is_empty_dir = false;
@@ -160,7 +156,7 @@ bool ZlibHelper::AddFileToZip(zipFile zip_file, const std::string &file_name_in_
     }
     int err = 0;
     zip_fileinfo zinfo = {0};
-    tm_zip  tmz = {0};
+    tm_zip tmz = {0};
     zinfo.tmz_date = tmz;
     zinfo.dosDate = 0;
     zinfo.internal_fa = 0;
@@ -288,7 +284,7 @@ bool ZlibHelper::UnzipFile(const std::string& zip_file_path, const std::string& 
             std::string str_full_file_path;
             temp_file_path = dest_home_path + "/" + sz_zip_file_name;
             str_full_file_path = temp_file_path;//保存完整路径
-            int nPos = dest_home_path.rfind("/");
+            size_t nPos = dest_home_path.rfind("/");
             if (nPos == std::string::npos){
                 continue;
             }
@@ -366,26 +362,26 @@ bool ZlibHelper::UnzipFile(const std::string& zip_file_path, const std::string& 
 }
 
 bool ZlibHelper::CreatedMultipleDirectory(const std::string &dir) {
-    std::string Directoryname = dir;
-    if (Directoryname[Directoryname.length() - 1] != '/')
+    std::string directory_name = dir;
+    if (directory_name[directory_name.length() - 1] != '/')
     {
-        Directoryname.append(1, '/');
+        directory_name.append(1, '/');
     }
     std::vector<std::string> vpath;
-    std::string strtemp;
+    std::string str_temp;
     bool  bSuccess = false;
-    for (int i = 0; i < (int)Directoryname.length(); i++)
+    for (int i = 0; i < directory_name.length(); i++)
     {
-        if (Directoryname[i] != '/'){
-            strtemp.append(1, Directoryname[i]);
+        if (directory_name[i] != '/'){
+            str_temp.append(1, directory_name[i]);
         } else {
-            if (!strtemp.empty()) {
-                vpath.push_back(strtemp);
+            if (!str_temp.empty()) {
+                vpath.push_back(str_temp);
             }
-            strtemp.append(1, '/');
+            str_temp.append(1, '/');
         }
     }
-    std::vector<std::string>::iterator vIter = vpath.begin();
+    auto vIter = vpath.begin();
     for (; vIter != vpath.end(); vIter++)
     {
         //CreateDirectory 创建一个新目录
@@ -447,6 +443,22 @@ bool ZlibHelper::IsSpecialDir(const std::string &file_path) {
     return strcmp(file_path.c_str(), ".") == 0 || strcmp(file_path.c_str(), "..") == 0;
 }
 
+bool ZlibHelper::CreateDir(const std::string& directory_name) {
+    struct stat path_info = {0};
+    if (stat(directory_name.c_str(), &path_info) == 0) {
+        if (!S_ISDIR(path_info.st_mode)) {
+            fprintf(stderr,
+                    "Path %s exists but is not a directory! Remove this "
+                    "file and re-run to create the directory.\n",
+                    directory_name.c_str());
+            return false;
+        }
+    } else {
+        return mkdir(directory_name.c_str(), S_IRWXU | S_IRWXG | S_IRWXO) == 0;
+    }
+    return true;
+}
+
 bool ZlibHelper::RemoveDir(const std::string &file_path) {
     bool ret = true;
     DIR *dir;
@@ -472,6 +484,8 @@ bool ZlibHelper::RemoveDir(const std::string &file_path) {
             std::string new_file_path;
             if (file_path[file_path.length() - 1] != '/') {
                 new_file_path = file_path + std::string("/");
+            } else {
+                new_file_path = file_path;
             }
             new_file_path.append(std::string(dir_info->d_name));
             RemoveDir(new_file_path);
@@ -489,6 +503,45 @@ bool ZlibHelper::RemoveDir(const std::string &file_path) {
     return ret;
 }
 
+bool ZlibHelper::RemoveFileInDirByRegular(const std::string &file_path, const std::string &regular) {
+    bool ret = true;
+    DIR *dir;
+    dirent *dir_info;
+    if(IsFile(file_path)){
+        std::cout << "file: " << file_path << std::endl;
+        std::regex rule(regular);
+        if (regex_match(file_path, rule)) {
+            std::cout << "rm file " << file_path << std::endl;
+            int status = remove(file_path.c_str());
+            if (status != 0) {
+                std::cout << "Error:" << file_path << std::endl;
+                std::cout << "Error:" << strerror(errno) << std::endl;
+            }
+        }
+        return true;
+    }
+
+    if (IsDir(file_path)) {
+        if((dir = opendir(file_path.c_str())) == nullptr) {
+            return false;
+        }
+        while((dir_info = readdir(dir)) != nullptr) {
+            if (IsSpecialDir(dir_info->d_name)) {
+                continue;
+            }
+            std::string new_file_path;
+            if (file_path[file_path.length() - 1] != '/') {
+                new_file_path = file_path + std::string("/");
+            }
+            new_file_path.append(std::string(dir_info->d_name));
+            RemoveFileInDirByRegular(new_file_path, regular);
+        }
+    } else {
+        std::cout << "File " << file_path << " is not exit!"<< std::endl;
+        ret = false;
+    }
+    return ret;
+}
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -606,6 +659,32 @@ struct tar_stat_info current_stat_info;
 #define MODE_RW		(S_IWUSR | S_IWGRP | S_IWOTH | MODE_R)
 #define MODE_RWX	(S_IXUSR | S_IXGRP | S_IXOTH | MODE_RW)
 #define MODE_ALL	(S_ISUID | S_ISGID | S_ISVTX | MODE_RWX)
+void tar_stat_init (struct tar_stat_info *st)
+{
+    memset (st, 0, sizeof (*st));
+}
+
+static void dump_file0 (struct tar_stat_info *st, char const *name, char const *p) {
+    union block *header;
+    char type;
+    off_t original_size;
+    struct timespec original_ctime;
+    off_t block_ordinal = -1;
+    int fd = 0;
+    bool is_dir;
+    struct tar_stat_info const *parent = st->parent;
+    bool top_level = ! parent;
+//    int parentfd = top_level ? chdir_fd : parent->fd;
+    void (*diag) (char const *) = 0;
+}
+
+void dump_file (struct tar_stat_info *parent, char const *name, char const *fullname) {
+    struct tar_stat_info st;
+    tar_stat_init (&st);
+    st.parent = parent;
+    dump_file0 (&st, name, fullname);
+}
+
 void open_archive(enum access_mode wanted_access) {
 //    flush_read_ptr = gnu_flush_read;
 //    flush_write_ptr = gnu_flush_write;
@@ -613,8 +692,11 @@ void open_archive(enum access_mode wanted_access) {
 
     /* File descriptor for archive file.  */
     int archive;
-
+    struct stat archive_stat;
     archive = creat("/Users/yuhao/temp2.tar", (S_IWUSR | S_IWGRP | S_IWOTH | MODE_R));
+    fstat (archive, &archive_stat);
+    std::string name("/Users/yuhao/temp");
+    dump_file (0, name.c_str(), name.c_str());
 
 }
 
