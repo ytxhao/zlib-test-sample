@@ -443,6 +443,20 @@ bool ZlibHelper::IsSpecialDir(const std::string &file_path) {
     return strcmp(file_path.c_str(), ".") == 0 || strcmp(file_path.c_str(), "..") == 0;
 }
 
+std::string ZlibHelper::GetFileName(const std::string& file_path) {
+    if (file_path.empty()) {
+        return file_path;
+    } else {
+        size_t npos = file_path.rfind('/');
+        if (npos == std::string::npos){
+            return file_path;
+        } else {
+            std::string file_name = file_path.substr(npos + 1);
+            return file_name;
+        }
+    }
+}
+
 bool ZlibHelper::CreateDir(const std::string& directory_name) {
     struct stat path_info = {0};
     if (stat(directory_name.c_str(), &path_info) == 0) {
@@ -503,7 +517,7 @@ bool ZlibHelper::RemoveDir(const std::string &file_path) {
     return ret;
 }
 
-bool ZlibHelper::RemoveFileInDirByRegular(const std::string &file_path, const std::string &regular) {
+bool ZlibHelper::RemoveFileInDirByRegular(const std::string &file_path, const std::string &regular,const bool recursive) {
     bool ret = true;
     DIR *dir;
     dirent *dir_info;
@@ -534,7 +548,22 @@ bool ZlibHelper::RemoveFileInDirByRegular(const std::string &file_path, const st
                 new_file_path = file_path + std::string("/");
             }
             new_file_path.append(std::string(dir_info->d_name));
-            RemoveFileInDirByRegular(new_file_path, regular);
+            if (recursive) {
+                RemoveFileInDirByRegular(new_file_path, regular, recursive);
+            } else {
+                if(IsFile(new_file_path)){
+                    std::cout << "file: " << new_file_path << std::endl;
+                    std::regex rule(regular);
+                    if (regex_match(new_file_path, rule)) {
+                        std::cout << "rm file " << new_file_path << std::endl;
+                        int status = remove(new_file_path.c_str());
+                        if (status != 0) {
+                            std::cout << "Error:" << new_file_path << std::endl;
+                            std::cout << "Error:" << strerror(errno) << std::endl;
+                        }
+                    }
+                }
+            }
         }
     } else {
         std::cout << "File " << file_path << " is not exit!"<< std::endl;

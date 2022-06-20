@@ -24,8 +24,9 @@ public:
     static bool IsFile(const std::string &file_path);
     static bool IsSpecialDir(const std::string &file_path);
     static bool RemoveDir(const std::string &file_path);
-    static bool RemoveFileInDirByRegular(const std::string &file_path, const std::string &regular);
+    static bool RemoveFileInDirByRegular(const std::string &file_path, const std::string &regular, bool recursive);
     static bool CreateDir(const std::string& directory_name);
+    static std::string GetFileName(const std::string& file_path);
 private:
     static bool CheckExistFile(const std::string &filename);
 

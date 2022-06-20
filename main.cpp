@@ -83,7 +83,10 @@ int main() {
 //    std::regex rule(".*\\.txt");
 //    if (regex_match(file_path, rule))
 //    std::cout <<"regex_match "<< regex_match(file_path, rule)<< std::endl;
-    ZlibHelper::CreateZipFromDir("/Users/yuhao/workspace/tmp/","/Users/yuhao/workspace/tmp.zip");
+//    ZlibHelper::CreateZipFromDir("/Users/yuhao/workspace/tmp/","/Users/yuhao/workspace/tmp.zip");
+    std::string file_name = ZlibHelper::GetFileName("/fa/tmp.txt");
+    std::cout << "file_name: " << file_name << std::endl;
+    ZlibHelper::RemoveFileInDirByRegular("/Users/yuhao/temp", ".*\\.txt", true);
     std::this_thread::sleep_for (std::chrono::milliseconds(1000));
     fclose(pPushDataFile.get());
 //    t_stop = true;
